@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<VisualGDBProjectSettings2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ConfigurationName>Release</ConfigurationName>
+  <Project xsi:type="com.visualgdb.project.embedded">
+    <CustomSourceDirectories>
+      <Directories />
+      <PathStyle>MinGWUnixSlash</PathStyle>
+    </CustomSourceDirectories>
+    <MainSourceDirectory>$(ProjectDir)</MainSourceDirectory>
+    <EmbeddedProfileFile>esp8266.xml</EmbeddedProfileFile>
+  </Project>
+  <Build xsi:type="com.visualgdb.build.msbuild">
+    <ProjectFile>LED_IoT.vcxproj</ProjectFile>
+    <ParallelJobCount>0</ParallelJobCount>
+  </Build>
+  <Debug xsi:type="com.visualgdb.debug.embedded">
+    <AdditionalStartupCommands />
+    <AdditionalGDBSettings>
+      <Features>
+        <DisableAutoDetection>false</DisableAutoDetection>
+        <UseFrameParameter>false</UseFrameParameter>
+        <SimpleValuesFlagSupported>false</SimpleValuesFlagSupported>
+        <ListLocalsSupported>false</ListLocalsSupported>
+        <ByteLevelMemoryCommandsAvailable>false</ByteLevelMemoryCommandsAvailable>
+        <ThreadInfoSupported>false</ThreadInfoSupported>
+        <PendingBreakpointsSupported>false</PendingBreakpointsSupported>
+        <SupportTargetCommand>false</SupportTargetCommand>
+        <ReliableBreakpointNotifications>false</ReliableBreakpointNotifications>
+      </Features>
+      <EnableSmartStepping>false</EnableSmartStepping>
+      <FilterSpuriousStoppedNotifications>false</FilterSpuriousStoppedNotifications>
+      <ForceSingleThreadedMode>false</ForceSingleThreadedMode>
+      <UseAppleExtensions>false</UseAppleExtensions>
+      <CanAcceptCommandsWhileRunning>false</CanAcceptCommandsWhileRunning>
+      <MakeLogFile>false</MakeLogFile>
+      <IgnoreModuleEventsWhileStepping>true</IgnoreModuleEventsWhileStepping>
+      <UseRelativePathsOnly>false</UseRelativePathsOnly>
+      <ExitAction>None</ExitAction>
+      <DisableDisassembly>false</DisableDisassembly>
+      <ExamineMemoryWithXCommand>false</ExamineMemoryWithXCommand>
+      <StepIntoNewInstanceEntry>main</StepIntoNewInstanceEntry>
+      <ExamineRegistersInRawFormat>true</ExamineRegistersInRawFormat>
+      <DisableSignals>false</DisableSignals>
+      <EnableAsyncExecutionMode>false</EnableAsyncExecutionMode>
+      <EnableNonStopMode>false</EnableNonStopMode>
+    </AdditionalGDBSettings>
+    <DebugMethodID>gdbstub</DebugMethodID>
+    <DebugMethodProperties>
+      <Entries>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.gdbstub.com_port</Key>
+          <Value>COM7</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.gdbstub.baud</Key>
+          <Value>74880</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.gdbstub.bl_baud</Key>
+          <Value>115200</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.reset_delay</Key>
+          <Value>25</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.program_flash</Key>
+          <Value>1</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.xt-ocd.flash_freq</Key>
+          <Value>40m</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.xt-ocd.flash_mode</Key>
+          <Value>qio</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.xt-ocd.flash_size</Key>
+          <Value>4m</Value>
+        </KeyValue>
+        <KeyValue>
+          <Key>com.sysprogs.esp8266.gdbstub.reset_sequence</Key>
+          <Value>!DTR;RTS;SLEEP;DTR;!RTS;SLEEP;!DTR;SLEEP</Value>
+        </KeyValue>
+      </Entries>
+    </DebugMethodProperties>
+    <AutoDetectRTOS>true</AutoDetectRTOS>
+    <SemihostingSupport>Disabled</SemihostingSupport>
+    <StepIntoEntryPoint>false</StepIntoEntryPoint>
+    <ReloadFirmwareOnReset>false</ReloadFirmwareOnReset>
+    <ValidateEndOfStackAddress>true</ValidateEndOfStackAddress>
+    <StopAtEntryPoint>false</StopAtEntryPoint>
+    <DynamicAnalysisSettings />
+    <EndOfStackSymbol>_estack</EndOfStackSymbol>
+  </Debug>
+  <CustomBuild>
+    <PreSyncActions />
+    <PreBuildActions />
+    <PostBuildActions />
+    <PreCleanActions />
+    <PostCleanActions />
+  </CustomBuild>
+  <CustomDebug>
+    <PreDebugActions />
+    <PostDebugActions />
+    <DebugStopActions />
+    <BreakMode>Default</BreakMode>
+  </CustomDebug>
+  <CustomShortcuts>
+    <Shortcuts />
+    <ShowMessageAfterExecuting>true</ShowMessageAfterExecuting>
+  </CustomShortcuts>
+  <UserDefinedVariables />
+  <ImportedPropertySheets />
+  <CodeSense>
+    <Enabled>Unknown</Enabled>
+    <ExtraSettings>
+      <HideErrorsInSystemHeaders>true</HideErrorsInSystemHeaders>
+    </ExtraSettings>
+  </CodeSense>
+  <BuildContextDirectory>VisualGDB\VisualGDBCache</BuildContextDirectory>
+</VisualGDBProjectSettings2>

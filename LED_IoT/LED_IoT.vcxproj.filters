@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{ce12c3a4-0ac3-4faa-b568-e44712dc5ec2}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{cccd695a-718c-4fcf-8438-e811a3461c28}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{6c0c8fcd-4aa9-480b-bce4-91223c0d3386}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="VisualGDB settings">
+      <UniqueIdentifier>{452ba680-6dbd-4770-ba4c-b22cb7c00013}</UniqueIdentifier>
+      <Extensions>*.vgdbsettings</Extensions>
+    </Filter>
+    <Filter Include="Source files\Device-specific files">
+      <UniqueIdentifier>{23c4744b-3590-444e-a82b-d76bb50eb972}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files">
+      <UniqueIdentifier>{18623fde-ec59-4310-aada-e51ab7c4fed0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\SDK">
+      <UniqueIdentifier>{b895e3cb-e0a2-42d4-ae6d-3f5e467687b9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="LEDBlink.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SysGCC\esp8266\esp8266-bsp\sysprogs\stubs.c">
+      <Filter>Source files\Device-specific files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="user_config.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\airkiss.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\at_custom.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\c_types.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\eagle_soc.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\espconn.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\espnow.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\ets_sys.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\gpio.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\ip_addr.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\mem.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\mesh.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\osapi.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\os_type.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\ping.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\pwm.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\queue.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\simple_pair.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\smartconfig.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\sntp.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\spi_flash.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\upgrade.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\user_interface.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SysGCC\esp8266\esp8266-bsp\IoT-SDK\include\wpa2_enterprise.h">
+      <Filter>Header files\Device-specific files\SDK</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LED_IoT-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="LED_IoT-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="esp8266.props">
+      <Filter>Source files\Device-specific files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="esp8266.xml">
+      <Filter>VisualGDB settings</Filter>
+    </Xml>
+  </ItemGroup>
+</Project>
