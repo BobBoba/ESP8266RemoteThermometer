@@ -1,3 +1,4 @@
+#include <TaskScheduler.h>
 #include <ArduinoJson.h>
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
@@ -56,6 +57,7 @@ struct DS18x20
 {
 	byte addr[8];
 	String saddr;
+	float celsius;
 };
 
 std::vector<DS18x20> DS18x20s;
@@ -67,11 +69,18 @@ extern char authSAS[];
 extern char deviceName[];
 extern char azureUri[];
 
+#define MILLISECONDS_IN_SECOND 1000
+
+Scheduler runner;
+Task EverySecondTask(1 * MILLISECONDS_IN_SECOND, TASK_FOREVER, &MainTask, &runner);
+Task EveryMinuteTask(60 * MILLISECONDS_IN_SECOND, TASK_FOREVER, &SenderTask, &runner);
+
 
 void setup(void) {
 	Serial.begin(74880);
 	delay(100);
 
+	Serial.println();
 	Serial.println();
 	Serial.println("-=[ Start ]=-");
 	Serial.println();
@@ -156,7 +165,25 @@ void setup(void) {
 
 
 	byte addr[8] = { 0 };
-	while (ds.search(addr)) {
+	while (ds.search(addr))
+	{
+		Serial.print("Found DS18x20 device: ");
+
+		Serial.print("ROM =");
+		for (int i = 0; i < 8; i++)
+		{
+			Serial.write(' ');
+			//Serial.print(addr[i], HEX);
+			Serial.printf("%02X", addr[i]);
+		}
+
+		if (OneWire::crc8(addr, 7) != addr[7])
+		{
+			Serial.println("CRC is not valid!");
+			continue;
+		}
+
+
 		DS18x20 d;
 		memcpy(d.addr, addr, 8);
 
@@ -169,19 +196,13 @@ void setup(void) {
 
 		probe_celsius.push_back(0.0);
 		probe_celsius_prev.push_back(0.0);
-
-		Serial.print("ROM =");
-		for (int i = 0; i < 8; i++) {
-			Serial.write(' ');
-			//Serial.print(addr[i], HEX);
-			Serial.printf("%02X", addr[i]);
-		}
-
-		if (OneWire::crc8(addr, 7) != addr[7]) {
-			Serial.println("CRC is not valid!");
-			continue;
-		}
+		Serial.println();
 	}
+
+	//runner.init();
+
+	EverySecondTask.enable();
+	EveryMinuteTask.enableDelayed(3 * MILLISECONDS_IN_SECOND);
 
 	lcd.clear();
 
@@ -221,6 +242,35 @@ void httpPost(String content)
 }
 
 void loop(void) {
+	runner.execute();
+}
+
+JsonObject& prepareJson()
+{
+	StaticJsonBuffer<1024> jsonBuffer;
+	JsonObject& jsonObj = jsonBuffer.createObject();
+
+	jsonObj["MAC"] = mac;
+
+	if (DS18x20s.size() > 0)
+	{
+		JsonArray& jsonDS18x20s = jsonObj.createNestedArray("DS18x20");
+
+		for (int p = 0, pc = DS18x20s.size(); p < pc; ++p)
+		{
+			JsonObject& jsonDS18x20 = jsonDS18x20s.createNestedObject();
+			jsonDS18x20["addr"] = DS18x20s[p].saddr;
+			jsonDS18x20["celsius"] = DS18x20s[p].celsius;
+		}
+	}
+
+	//String buffer;
+	return jsonObj;// .printTo(buffer);
+
+}
+
+void MainTask()
+{
 	byte i;
 	byte present = 0;
 	byte type_s;
@@ -229,29 +279,23 @@ void loop(void) {
 	//ROM = 28 FF BC CA 88 16 3 E7
 	//ROM = 28 FF 2 11 88 16 3 9F
 
-	StaticJsonBuffer<1024> jsonBuffer;
-	JsonObject& jsonObj = jsonBuffer.createObject();
-
-	jsonObj["MAC"] = mac;
 
 	Serial.printf("[%d]\n", step++);
 
 	//byte addr[8] = { 0 };
 	//int p = 0;
 	//while (ds.search(addr)) {
-		//++p;
+	//++p;
 
-		//JsonArray ja = jsonObj.createNestedArray("OneWire");
+	//JsonArray ja = jsonObj.createNestedArray("OneWire");
 
-		//JsonObject jo = ja.createNestedObject();
-		//	Serial.println("No more addresses.");
-		//	//Serial.println();
-		//	ds.reset_search();
-		//	delay(1000);
-		//	return;
-		//}
-
-	JsonArray& jsonDS18x20s = jsonObj.createNestedArray("DS18x20");
+	//JsonObject jo = ja.createNestedObject();
+	//	Serial.println("No more addresses.");
+	//	//Serial.println();
+	//	ds.reset_search();
+	//	delay(1000);
+	//	return;
+	//}
 
 	for (int p = 0, pc = DS18x20s.size(); p < pc; ++p)
 	{
@@ -346,16 +390,14 @@ void loop(void) {
 		else
 			probe_celsius[p] = celsius;
 
+		DS18x20s[p].celsius = celsius;
+
 		//fahrenheit = celsius * 1.8 + 32.0;
 		Serial.print(celsius);
 		Serial.print(" Celsius");
 		//Serial.print(fahrenheit);
 		//Serial.println(" Fahrenheit");
 		Serial.println();
-
-		JsonObject& jsonDS18x20 = jsonDS18x20s.createNestedObject();
-		jsonDS18x20["addr"] = DS18x20s[p].saddr;
-		jsonDS18x20["celcius"] = celsius;
 	}
 
 	if (probe_celsius.size() >= 1)
@@ -386,8 +428,6 @@ void loop(void) {
 	}
 
 	//char buffer[1024] = { 0 };
-	String buffer;
-	jsonObj.printTo(buffer);
 	//buffer += "{\"";
 
 	//buffer += "MAC\" : \"";
@@ -408,12 +448,18 @@ void loop(void) {
 
 	//buffer += "}";
 	//sprintf_s(buffer, "{\"probe1\" : \"%f\", \"probe2\" : \"%f\"}", probe_celsius[0], probe_celsius[1]);
-	Serial.print("Send data to IoT Hub: ");
+	Serial.println("json data: ");
+	JsonObject& json = prepareJson();
+	String buffer;
+	json.prettyPrintTo(buffer);
 	Serial.println(buffer.c_str());
 
-	delay(2000);
-	return;
+	//delay(2000);
+	//return;
+}
 
+void SenderTask()
+{
 	//TODO: optimization > don't sent very same values
 	bool needUpdate = false;
 	for (int p = 0, pc = probe_celsius.size(); p < pc; ++p)
@@ -427,8 +473,15 @@ void loop(void) {
 
 	if (needUpdate)
 	{
+		JsonObject& json = prepareJson();
+
+		String buffer;
+		json.printTo(buffer);
+
 		Serial.println("Send updated data to IoT Hub");
+
 		httpPost(buffer);
+
 		String response = "";
 		char c;
 		while (client.available()) {
@@ -455,7 +508,7 @@ void loop(void) {
 			probe_celsius_prev[p] = probe_celsius[p];
 		}
 		//probe_celsius_prev[1] = probe_celsius[1];
-		delay(60 * 1000); // sleem one minute
+		//delay(60 * 1000); // sleep one minute
 	}
 
 }

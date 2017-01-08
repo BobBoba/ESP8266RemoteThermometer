@@ -42,7 +42,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Work\ESP8266_Arduino\libraries\ESP8266WiFi\src;D:\OneDrive\work\Arduino\libraries\ArduinoJson;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Work\ESP8266_Arduino\libraries\ESP8266WiFi\src;D:\OneDrive\work\Arduino\libraries\ArduinoJson;D:\OneDrive\work\Arduino\libraries\TaskScheduler\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -79,7 +79,7 @@
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\Work\ESP8266_Arduino\libraries\ESP8266WiFi\src;D:\OneDrive\work\Arduino\libraries\ArduinoJson;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Work\ESP8266_Arduino\libraries\ESP8266WiFi\src;D:\OneDrive\work\Arduino\libraries\ArduinoJson;D:\OneDrive\work\Arduino\libraries\TaskScheduler\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <None Include="Sketch1.ino">
