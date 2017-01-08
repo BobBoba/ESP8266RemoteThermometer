@@ -1,3 +1,4 @@
+#include <ArduinoJson.h>
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
 #include <WiFiClientSecure.h>
@@ -11,6 +12,8 @@
 #include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
 #include <OneWire.h>
+#include <vector>
+
 
 // OneWire DS18S20, DS18B20, DS1822 Temperature Example
 //
@@ -30,6 +33,7 @@ int step = 0;
 LiquidCrystal_I2C lcd(DISPLAY_I2C_ADDR, DISPLAY_WIDTH, DISPLAY_LINES); // Устанавливаем дисплей
 
 // WIFI
+String mac;
 extern const char* WIFI_SSID;
 extern const char* WIFI_PWD;
 
@@ -39,13 +43,23 @@ extern const char* WIFI_PWD;
 WiFiClientSecure client;
 
 
-#define NUM_PROBES 2
+//#define NUM_PROBES 2
+//
+//byte probe_addresses[NUM_PROBES][8] = {
+//	{ 0x28, 0xFF, 0xBC, 0xCA, 0x88, 0x16, 0x3, 0xE7 },
+//	{ 0x28, 0xFF, 0x2, 0x11, 0x88, 0x16, 0x3, 0x9F } };
 
-byte probe_addresses[NUM_PROBES][8] = {
-	{ 0x28, 0xFF, 0xBC, 0xCA, 0x88, 0x16, 0x3, 0xE7 },
-	{ 0x28, 0xFF, 0x2, 0x11, 0x88, 0x16, 0x3, 0x9F } };
+//float probe_celsius_prev[NUM_PROBES] = { 0 };
+//float probe_celsius[NUM_PROBES] = { 0 };
 
-float probe_celsius[NUM_PROBES] = { 0 };
+struct DS18x20
+{
+	byte addr[8];
+	String saddr;
+};
+
+std::vector<DS18x20> DS18x20s;
+std::vector<float> probe_celsius, probe_celsius_prev;
 
 extern char azureHost[];
 extern int azurePort;
@@ -57,6 +71,7 @@ extern char azureUri[];
 void setup(void) {
 	Serial.begin(74880);
 	delay(100);
+
 	Serial.println();
 	Serial.println("-=[ Start ]=-");
 	Serial.println();
@@ -67,7 +82,21 @@ void setup(void) {
 
 	lcd.print("Welcome!!!");
 
-	delay(10);
+	uint8_t macAddr[6];
+	WiFi.macAddress(macAddr);
+	//MAC2STR()
+	for (int i = 0; i < 6; ++i)
+		mac += String(macAddr[i], 16);
+
+	mac.toUpperCase();
+
+	//jsonObj["MAC"] = mac;
+
+	lcd.setCursor(0, 1);
+	lcd.print("MAC:");
+	lcd.print(mac);
+
+	delay(2000);
 
 
 	byte degree[8] = {
@@ -81,13 +110,20 @@ void setup(void) {
 	};
 	lcd.createChar(0, degree);
 
+	lcd.clear();
+
+	lcd.setCursor(0, 0);
+	lcd.print("WiFi...");
+
+
 	WiFi.begin(WIFI_SSID, WIFI_PWD);
 
-	Serial.print("Connecting to WiFi");
+	Serial.print("Connecting to WiFi...");
 	int counter = 0;
 	while (WiFi.status() != WL_CONNECTED) {
-		delay(500);
+		delay(1000);
 		Serial.print(".");
+		lcd.print(".");
 		//display.clear();
 		//display.drawString(64, 10, "Connecting to WiFi");
 		//display.drawXbm(46, 30, 8, 8, counter % 3 == 0 ? activeSymbole : inactiveSymbole);
@@ -98,18 +134,56 @@ void setup(void) {
 		counter++;
 	}
 	Serial.println(" done!!!");
+	lcd.print(" OK");
 
 
+	lcd.setCursor(0, 1);
+	lcd.print("Azure...");
 
 	Serial.print("Connecting to ");
 	Serial.print(azureHost);
 	if (!client.connect(azureHost, azurePort)) {
 		Serial.println(" failed");
+		lcd.print(" Error");
+		delay(1000);
 		//return;
 	}
 	else {
 		Serial.println(" done!!!");
+		lcd.print(" OK");
+		delay(500);
 	}
+
+
+	byte addr[8] = { 0 };
+	while (ds.search(addr)) {
+		DS18x20 d;
+		memcpy(d.addr, addr, 8);
+
+		for (int i = 0; i < 8; ++i)
+			d.saddr += String(addr[i], 16);
+
+		d.saddr.toUpperCase();
+
+		DS18x20s.push_back(d);
+
+		probe_celsius.push_back(0.0);
+		probe_celsius_prev.push_back(0.0);
+
+		Serial.print("ROM =");
+		for (int i = 0; i < 8; i++) {
+			Serial.write(' ');
+			//Serial.print(addr[i], HEX);
+			Serial.printf("%02X", addr[i]);
+		}
+
+		if (OneWire::crc8(addr, 7) != addr[7]) {
+			Serial.println("CRC is not valid!");
+			continue;
+		}
+	}
+
+	lcd.clear();
 
 	//if (client.verify(fingerprint, azureHost)) {
 	//	Serial.println("certificate matches");
@@ -139,7 +213,7 @@ void httpPost(String content)
 		client.println(content.length());
 		client.println();
 		client.println(content);
-		delay(200);
+		//delay(200);
 	}
 	else {
 		Serial.println("HTTP POST отправка неудачна");
@@ -151,35 +225,51 @@ void loop(void) {
 	byte present = 0;
 	byte type_s;
 	byte data[12];
-	float celsius, fahrenheit;
+	float celsius;// , fahrenheit;
 	//ROM = 28 FF BC CA 88 16 3 E7
 	//ROM = 28 FF 2 11 88 16 3 9F
 
+	StaticJsonBuffer<1024> jsonBuffer;
+	JsonObject& jsonObj = jsonBuffer.createObject();
+
+	jsonObj["MAC"] = mac;
+
 	Serial.printf("[%d]\n", step++);
 
-	//if (!ds.search(addr)) {
-	//	Serial.println("No more addresses.");
-	//	//Serial.println();
-	//	ds.reset_search();
-	//	delay(1000);
-	//	return;
-	//}
+	//byte addr[8] = { 0 };
+	//int p = 0;
+	//while (ds.search(addr)) {
+		//++p;
 
-	for (int p = 0; p < NUM_PROBES; ++p)
+		//JsonArray ja = jsonObj.createNestedArray("OneWire");
+
+		//JsonObject jo = ja.createNestedObject();
+		//	Serial.println("No more addresses.");
+		//	//Serial.println();
+		//	ds.reset_search();
+		//	delay(1000);
+		//	return;
+		//}
+
+	JsonArray& jsonDS18x20s = jsonObj.createNestedArray("DS18x20");
+
+	for (int p = 0, pc = DS18x20s.size(); p < pc; ++p)
 	{
-		byte* addr = probe_addresses[p];
+		byte* addr = DS18x20s[p].addr;
 
-		Serial.print("ROM =");
-		for (i = 0; i < 8; i++) {
-			Serial.write(' ');
-			//Serial.print(addr[i], HEX);
-			Serial.printf("%02X", addr[i]);
-		}
+		//String saddr;
+		//Serial.print("ROM =");
+		//for (i = 0; i < 8; i++) {
+		//	Serial.write(' ');
+		//	//Serial.print(addr[i], HEX);
+		//	Serial.printf("%02X", addr[i]);
+		//	saddr += String(addr[i], 16);
+		//}
 
-		if (OneWire::crc8(addr, 7) != addr[7]) {
-			Serial.println("CRC is not valid!");
-			return;
-		}
+		//if (OneWire::crc8(addr, 7) != addr[7]) {
+		//	Serial.println("CRC is not valid!");
+		//	continue;
+		//}
 		//Serial.println();
 
 		// the first ROM byte indicates which chip
@@ -198,7 +288,7 @@ void loop(void) {
 			break;
 		default:
 			Serial.println("Device is not a DS18x20 family device.");
-			return;
+			continue;
 		}
 
 		Serial.print("  Temperature = ");
@@ -247,64 +337,125 @@ void loop(void) {
 			//// default is 12 bit resolution, 750 ms conversion time
 		}
 		celsius = (float)raw / 16.0;
-		probe_celsius[p] = celsius;
-		fahrenheit = celsius * 1.8 + 32.0;
+
+		if (p >= probe_celsius.size())
+		{
+			probe_celsius.push_back(celsius);
+			probe_celsius_prev.push_back(0);
+		}
+		else
+			probe_celsius[p] = celsius;
+
+		//fahrenheit = celsius * 1.8 + 32.0;
 		Serial.print(celsius);
 		Serial.print(" Celsius");
 		//Serial.print(fahrenheit);
 		//Serial.println(" Fahrenheit");
 		Serial.println();
+
+		JsonObject& jsonDS18x20 = jsonDS18x20s.createNestedObject();
+		jsonDS18x20["addr"] = DS18x20s[p].saddr;
+		jsonDS18x20["celcius"] = celsius;
 	}
 
-	lcd.setCursor(0, 0);
-	int w = 0;
-	w += lcd.print("T1: ");
-	w += lcd.print(probe_celsius[0], 2);
-	w += lcd.write(byte(0)); // degrees symbol
-	w += lcd.print("");
+	if (probe_celsius.size() >= 1)
+	{
+		lcd.setCursor(0, 0);
+		int w = 0;
+		w += lcd.print("T1: ");
+		w += lcd.print(probe_celsius[0], 2);
+		w += lcd.write(byte(0)); // degrees symbol
+		w += lcd.print("");
 
-	for (int i = w; i < DISPLAY_WIDTH; ++i)
-		lcd.print(" ");
+		for (int i = w; i < DISPLAY_WIDTH; ++i)
+			lcd.print(" ");
+	}
 
-	lcd.setCursor(0, 1);
-	w += lcd.print("T2: ");
-	w += lcd.print(probe_celsius[1], 2);
-	w += lcd.write(byte(0)); // degrees symbol
-	w += lcd.print("");
 
-	for (int i = w; i < DISPLAY_WIDTH; ++i)
-		lcd.print(" ");
+	if (probe_celsius.size() >= 2)
+	{
+		lcd.setCursor(0, 1);
+		int w = 0;
+		w += lcd.print("T2: ");
+		w += lcd.print(probe_celsius[1], 2);
+		w += lcd.write(byte(0)); // degrees symbol
+		w += lcd.print("");
 
-	char buffer[1024] = { 0 };
-	sprintf(buffer, "{'probe1' : '%f', 'probe2' : '%f'}", probe_celsius[0], probe_celsius[1]);
-	Serial.println("Send data to IoT Hub");
-	Serial.println(buffer);
-	delay(1000);
+		for (int i = w; i < DISPLAY_WIDTH; ++i)
+			lcd.print(" ");
+	}
+
+	//char buffer[1024] = { 0 };
+	String buffer;
+	jsonObj.printTo(buffer);
+	//buffer += "{\"";
+
+	//buffer += "MAC\" : \"";
+	//buffer += mac;
+	//buffer += "\"";
+
+	//buffer += ", ";
+
+	//buffer += "probe1\" : \"";
+	//buffer += String(probe_celsius[0], 2);
+	//buffer += "\"";
+
+	//buffer += ", ";
+
+	//buffer += "\"probe2\" : \"";
+	//buffer += String(probe_celsius[1], 2);
+	//buffer += "\"";
+
+	//buffer += "}";
+	//sprintf_s(buffer, "{\"probe1\" : \"%f\", \"probe2\" : \"%f\"}", probe_celsius[0], probe_celsius[1]);
+	Serial.print("Send data to IoT Hub: ");
+	Serial.println(buffer.c_str());
+
+	delay(2000);
 	return;
 
-
-	Serial.println("Send data to IoT Hub");
-	httpPost(buffer);
-	String response = "";
-	char c;
-	while (client.available()) {
-		c = client.read();
-		response.concat(c);
-	}
-	if (response.equals(""))
+	//TODO: optimization > don't sent very same values
+	bool needUpdate = false;
+	for (int p = 0, pc = probe_celsius.size(); p < pc; ++p)
 	{
-		Serial.println("empty response");
-	}
-	else
-	{
-		if (response.startsWith("HTTP/1.1 204")) {
-			Serial.println("String has been successfully send to Azure IoT Hub");
-		}
-		else {
-			Serial.println("Error");
-			Serial.println(response);
+		if (probe_celsius_prev[p] != probe_celsius[p])
+		{
+			needUpdate = true;
+			break;
 		}
 	}
 
-	delay(60 * 1000); // sleem one minute
+	if (needUpdate)
+	{
+		Serial.println("Send updated data to IoT Hub");
+		httpPost(buffer);
+		String response = "";
+		char c;
+		while (client.available()) {
+			c = client.read();
+			response.concat(c);
+		}
+		if (response.equals(""))
+		{
+			Serial.println("empty response");
+		}
+		else
+		{
+			if (response.startsWith("HTTP/1.1 204")) {
+				Serial.println("String has been successfully send to Azure IoT Hub");
+			}
+			else {
+				Serial.println("Error");
+				Serial.println(response);
+			}
+		}
+
+		for (int p = 0, pc = probe_celsius.size(); p < pc; ++p)
+		{
+			probe_celsius_prev[p] = probe_celsius[p];
+		}
+		//probe_celsius_prev[1] = probe_celsius[1];
+		delay(60 * 1000); // sleem one minute
+	}
+
 }
