@@ -1,3 +1,5 @@
+#include <DHT_U.h>
+#include <DHT.h>
 #include <TaskScheduler.h>
 #include <ArduinoJson.h>
 #include <WiFiUdp.h>
@@ -62,6 +64,7 @@ struct DS18x20
 
 std::vector<DS18x20> DS18x20s;
 std::vector<float> probe_celsius, probe_celsius_prev;
+float out_temp, out_hum;
 
 extern char azureHost[];
 extern int azurePort;
@@ -75,6 +78,7 @@ Scheduler runner;
 Task EverySecondTask(1 * MILLISECONDS_IN_SECOND, TASK_FOREVER, &MainTask, &runner);
 Task EveryMinuteTask(60 * MILLISECONDS_IN_SECOND, TASK_FOREVER, &SenderTask, &runner);
 
+DHT dht(2, DHT11);
 
 void setup(void) {
 	Serial.begin(74880);
@@ -199,6 +203,15 @@ void setup(void) {
 		Serial.println();
 	}
 
+	dht.begin();
+
+	lcd.setCursor(0, 0);
+	lcd.print("T intake exhaust");
+	lcd.setCursor(0, 1);
+	lcd.print("out temp humidit");
+	
+	delay(2000);
+
 	//runner.init();
 
 	EverySecondTask.enable();
@@ -252,6 +265,12 @@ JsonObject& prepareJson()
 
 	jsonObj["MAC"] = mac;
 
+	if (!isnan(out_hum) && !isnan(out_temp)) {
+		JsonObject& jsonDTH11 = jsonObj.createNestedObject("DTH11");
+		jsonDTH11["temperature"] = out_temp;
+		jsonDTH11["humidity"] = out_hum;
+	}
+
 	if (DS18x20s.size() > 0)
 	{
 		JsonArray& jsonDS18x20s = jsonObj.createNestedArray("DS18x20");
@@ -259,8 +278,8 @@ JsonObject& prepareJson()
 		for (int p = 0, pc = DS18x20s.size(); p < pc; ++p)
 		{
 			JsonObject& jsonDS18x20 = jsonDS18x20s.createNestedObject();
-			jsonDS18x20["addr"] = DS18x20s[p].saddr;
-			jsonDS18x20["celsius"] = DS18x20s[p].celsius;
+			jsonDS18x20["address"] = DS18x20s[p].saddr;
+			jsonDS18x20["temperature"] = DS18x20s[p].celsius;
 		}
 	}
 
@@ -404,28 +423,55 @@ void MainTask()
 	{
 		lcd.setCursor(0, 0);
 		int w = 0;
-		w += lcd.print("T1: ");
+		w += lcd.print("IE ");
 		w += lcd.print(probe_celsius[0], 2);
 		w += lcd.write(byte(0)); // degrees symbol
-		w += lcd.print("");
+		//w += lcd.print("");
+
+		if (probe_celsius.size() >= 2)
+		{
+			w += lcd.print(" ");
+			w += lcd.print(probe_celsius[1], 2);
+			w += lcd.write(byte(0)); // degrees symbol
+			//w += lcd.print("");
+		}
 
 		for (int i = w; i < DISPLAY_WIDTH; ++i)
 			lcd.print(" ");
 	}
 
+	lcd.setCursor(0, 1);
+	int w = 0;
+	w += lcd.print("OUT T:");
+	w += lcd.print(out_temp, 0);
+	w += lcd.write(byte(0)); // degrees symbol
+	w += lcd.print(" H:");
+	w += lcd.print(out_hum, 0);
+	w += lcd.print("%"); // degrees symbol
+	//w += lcd.print("");
+	
+	for (int i = w; i < DISPLAY_WIDTH; ++i)
+		lcd.print(" ");
 
-	if (probe_celsius.size() >= 2)
-	{
-		lcd.setCursor(0, 1);
-		int w = 0;
-		w += lcd.print("T2: ");
-		w += lcd.print(probe_celsius[1], 2);
-		w += lcd.write(byte(0)); // degrees symbol
-		w += lcd.print("");
+	// Reading temperature or humidity takes about 250 milliseconds!
+	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+	out_hum = dht.readHumidity();
+	// Read temperature as Celsius (the default)
+	out_temp = dht.readTemperature();
 
-		for (int i = w; i < DISPLAY_WIDTH; ++i)
-			lcd.print(" ");
+	// Check if any reads failed and exit early (to try again).
+	if (isnan(out_hum) || isnan(out_temp)) {
+		Serial.println("Failed to read from DHT sensor!");
 	}
+	else {
+		Serial.print("DTH11 Humidity: ");
+		Serial.print(out_hum);
+		Serial.print(" %\t");
+		Serial.print("Temperature: ");
+		Serial.print(out_temp);
+		Serial.println(" *C ");
+	}
+
 
 	//char buffer[1024] = { 0 };
 	//buffer += "{\"";
