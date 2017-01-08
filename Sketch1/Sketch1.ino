@@ -440,6 +440,12 @@ void MainTask()
 			lcd.print(" ");
 	}
 
+	// Reading temperature or humidity takes about 250 milliseconds!
+	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+	out_hum = dht.readHumidity();
+	// Read temperature as Celsius (the default)
+	out_temp = dht.readTemperature();
+	
 	lcd.setCursor(0, 1);
 	int w = 0;
 	w += lcd.print("OUT T:");
@@ -453,11 +459,7 @@ void MainTask()
 	for (int i = w; i < DISPLAY_WIDTH; ++i)
 		lcd.print(" ");
 
-	// Reading temperature or humidity takes about 250 milliseconds!
-	// Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-	out_hum = dht.readHumidity();
-	// Read temperature as Celsius (the default)
-	out_temp = dht.readTemperature();
+
 
 	// Check if any reads failed and exit early (to try again).
 	if (isnan(out_hum) || isnan(out_temp)) {
