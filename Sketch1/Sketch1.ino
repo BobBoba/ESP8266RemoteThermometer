@@ -1,7 +1,14 @@
 #include <WiFiUdp.h>
 #include <WiFiServer.h>
+#include <WiFiClientSecure.h>
 #include <WiFiClient.h>
-#include <WiFi.h>
+#include <ESP8266WiFiType.h>
+#include <ESP8266WiFiSTA.h>
+#include <ESP8266WiFiScan.h>
+#include <ESP8266WiFiMulti.h>
+#include <ESP8266WiFiGeneric.h>
+#include <ESP8266WiFiAP.h>
+#include <ESP8266WiFi.h>
 #include <LiquidCrystal_I2C.h>
 #include <OneWire.h>
 
@@ -21,6 +28,30 @@ int step = 0;
 
 //LiquidCrystal_I2C lcd(0x27, 16, 2); // Устанавливаем дисплей
 LiquidCrystal_I2C lcd(DISPLAY_I2C_ADDR, DISPLAY_WIDTH, DISPLAY_LINES); // Устанавливаем дисплей
+
+// WIFI
+extern const char* WIFI_SSID;
+extern const char* WIFI_PWD;
+
+
+//IPAddress server(192, 168, 0, 10); // mosquitto address
+//WiFiClient wclient;
+WiFiClientSecure client;
+
+
+#define NUM_PROBES 2
+
+byte probe_addresses[NUM_PROBES][8] = {
+	{ 0x28, 0xFF, 0xBC, 0xCA, 0x88, 0x16, 0x3, 0xE7 },
+	{ 0x28, 0xFF, 0x2, 0x11, 0x88, 0x16, 0x3, 0x9F } };
+
+float probe_celsius[NUM_PROBES] = { 0 };
+
+extern char azureHost[];
+extern int azurePort;
+extern char authSAS[];
+extern char deviceName[];
+extern char azureUri[];
 
 
 void setup(void) {
@@ -50,15 +81,70 @@ void setup(void) {
 	};
 	lcd.createChar(0, degree);
 
+	WiFi.begin(WIFI_SSID, WIFI_PWD);
+
+	Serial.print("Connecting to WiFi");
+	int counter = 0;
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(500);
+		Serial.print(".");
+		//display.clear();
+		//display.drawString(64, 10, "Connecting to WiFi");
+		//display.drawXbm(46, 30, 8, 8, counter % 3 == 0 ? activeSymbole : inactiveSymbole);
+		//display.drawXbm(60, 30, 8, 8, counter % 3 == 1 ? activeSymbole : inactiveSymbole);
+		//display.drawXbm(74, 30, 8, 8, counter % 3 == 2 ? activeSymbole : inactiveSymbole);
+		//display.display();
+
+		counter++;
+	}
+	Serial.println(" done!!!");
+
+
+
+	Serial.print("Connecting to ");
+	Serial.print(azureHost);
+	if (!client.connect(azureHost, azurePort)) {
+		Serial.println(" failed");
+		//return;
+	}
+	else {
+		Serial.println(" done!!!");
+	}
+
+	//if (client.verify(fingerprint, azureHost)) {
+	//	Serial.println("certificate matches");
+	//}
+	//else {
+	//	Serial.println("certificate doesn't match");
+	//}
+
+	//wclient.connect()
 }
 
-#define NUM_PROBES 2
-
-byte probe_addresses[NUM_PROBES][8] = {
-	{ 0x28, 0xFF, 0xBC, 0xCA, 0x88, 0x16, 0x3, 0xE7 }, 
-	{ 0x28, 0xFF, 0x2, 0x11, 0x88, 0x16, 0x3, 0x9F } };
-
-float probe_celsius[NUM_PROBES] = { 0 };
+void httpPost(String content)
+{
+	client.stop(); // закрываем подключение, если вдруг оно открыто
+	if (client.connect(azureHost, azurePort)) {
+		client.print("POST ");
+		client.print(azureUri);
+		client.println(" HTTP/1.1");
+		client.print("Host: ");
+		client.println(azureHost);
+		client.print("Authorization: ");
+		client.println(authSAS);
+		client.println("Connection: close");
+		client.print("Content-Type: ");
+		client.println("text/plain");
+		client.print("Content-Length: ");
+		client.println(content.length());
+		client.println();
+		client.println(content);
+		delay(200);
+	}
+	else {
+		Serial.println("HTTP POST отправка неудачна");
+	}
+}
 
 void loop(void) {
 	byte i;
@@ -188,4 +274,37 @@ void loop(void) {
 
 	for (int i = w; i < DISPLAY_WIDTH; ++i)
 		lcd.print(" ");
+
+	char buffer[1024] = { 0 };
+	sprintf(buffer, "{'probe1' : '%f', 'probe2' : '%f'}", probe_celsius[0], probe_celsius[1]);
+	Serial.println("Send data to IoT Hub");
+	Serial.println(buffer);
+	delay(1000);
+	return;
+
+
+	Serial.println("Send data to IoT Hub");
+	httpPost(buffer);
+	String response = "";
+	char c;
+	while (client.available()) {
+		c = client.read();
+		response.concat(c);
+	}
+	if (response.equals(""))
+	{
+		Serial.println("empty response");
+	}
+	else
+	{
+		if (response.startsWith("HTTP/1.1 204")) {
+			Serial.println("String has been successfully send to Azure IoT Hub");
+		}
+		else {
+			Serial.println("Error");
+			Serial.println(response);
+		}
+	}
+
+	delay(60 * 1000); // sleem one minute
 }

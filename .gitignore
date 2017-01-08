@@ -27,3 +27,11 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 *.vssscc
 $tf*/
+
+CodeDB*/
+.vs*/
+__vm*/
+packages*/
+*.tss
+VisualGDBCache*/
+*.filters
